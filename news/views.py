@@ -54,7 +54,7 @@ def search_results(request):
         searched_articles = Article.search_by_title(search_term)
         message = f"{search_term}"
 
-        return render(request, 'all-news/search.html',{"message":message,"articles": searched_articles})
+        return (request, 'all-news/search.html',{"message":message,"articles": searched_articles})
 
     else:
         message = "You haven't searched for any term"
