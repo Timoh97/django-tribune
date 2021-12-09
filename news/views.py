@@ -1,36 +1,26 @@
 from django.shortcuts import render,redirect
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404,HttpResponseRedirect
 import datetime as dt
+from .forms import NewsLetterForm
 from .models import Article
+from .email import send_welcome_email
+from .models import Article, NewsLetterRecipients
+from django.http import JsonResponse
 
 # Create your views here.
 def welcome(request):
     return render(request, 'welcome.html')
 
-def news_of_day(request):
-    date = dt.date.today()
-    return render(request, 'all-news/today-news.html',{'date': date})
+
+
 def news_today(request):
     date = dt.date.today()
     news = Article.todays_news()
-    return render(request, 'all-news/today-news.html', {"date": date,"news":news})
+    form = NewsLetterForm()
+    return render(request, 'all-news/today-news.html', {"date": date, "news": news, "letterForm": form})
 
 
 
-def past_days_news(request,past_date):
-    
-    try:
-        # Converts data from the string Url
-        date = dt.datetime.strptime(past_date,'%Y-%m-%d').date()
-    except ValueError:
-        # Raise 404 error when ValueError is thrown
-        raise Http404()
-        assert False
-
-    if date == dt.date.today():
-        return redirect(news_of_day)
-
-    return render(request, 'all-news/past-news.html', {"date":date})
 
 def past_days_news(request, past_date):
     try:
@@ -66,3 +56,14 @@ def article(request,article_id):
     except DoesNotExist:
         raise Http404()
     return render(request,"all-news/article.html", {"article":article})
+
+def newsletter(request):
+    name = request.POST.get('your_name')
+    email = request.POST.get('email')
+
+    recipient = NewsLetterRecipients(name=name, email=email)
+    recipient.save()
+    send_welcome_email(name, email)
+    data = {'success': 'You have been successfully added to mailing list'}
+    return JsonResponse(data)
+
